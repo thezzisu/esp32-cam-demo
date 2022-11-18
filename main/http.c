@@ -10,9 +10,6 @@
 #include "esp_netif.h"
 #include "esp_tls_crypto.h"
 
-esp_err_t jpg_httpd_handler(httpd_req_t *req);
-esp_err_t jpg_stream_httpd_handler(httpd_req_t *req);
-
 static const char *TAG = "HTTP";
 static const char *index_html =
     "<!DOCTYPE html>"
@@ -65,16 +62,36 @@ static const httpd_uri_t restart_uri = {
     .handler = restart_post_handler,
 };
 
+esp_err_t jpg_httpd_handler(httpd_req_t *req);
+esp_err_t jpg_stream_httpd_handler(httpd_req_t *req);
 static const httpd_uri_t capture_uri = {
     .uri = "/capture",
     .method = HTTP_GET,
     .handler = jpg_httpd_handler,
 };
-
 static const httpd_uri_t stream_uri = {
     .uri = "/stream",
     .method = HTTP_GET,
     .handler = jpg_stream_httpd_handler,
+};
+
+esp_err_t led_get_handler(httpd_req_t *req);
+esp_err_t toggle_led_handler(httpd_req_t *req);
+esp_err_t toggle_flash_handler(httpd_req_t *req);
+static const httpd_uri_t led_uri = {
+    .uri = "/led",
+    .method = HTTP_GET,
+    .handler = led_get_handler,
+};
+static const httpd_uri_t toggle_led_uri = {
+    .uri = "/led/led",
+    .method = HTTP_POST,
+    .handler = toggle_led_handler,
+};
+static const httpd_uri_t toggle_flash_uri = {
+    .uri = "/led/flash",
+    .method = HTTP_POST,
+    .handler = toggle_flash_handler,
 };
 
 static httpd_handle_t start_webserver() {
@@ -91,9 +108,9 @@ static httpd_handle_t start_webserver() {
     httpd_register_uri_handler(server, &capture_uri);
     httpd_register_uri_handler(server, &stream_uri);
     httpd_register_uri_handler(server, &restart_uri);
-#if CONFIG_EXAMPLE_BASIC_AUTH
-    httpd_register_basic_auth(server);
-#endif
+    httpd_register_uri_handler(server, &led_uri);
+    httpd_register_uri_handler(server, &toggle_led_uri);
+    httpd_register_uri_handler(server, &toggle_flash_uri);
     return server;
   }
 

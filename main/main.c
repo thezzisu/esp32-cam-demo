@@ -17,11 +17,12 @@
 #include "lwip/sys.h"
 #include "nvs_flash.h"
 
-static const char *TAG = "Main";
+static const char *TAG = "MAIN";
 
 void wifi_init_sta();
 void camera_init();
 void http_init();
+void led_init();
 
 void app_main() {
   // Initialize NVS
@@ -33,8 +34,13 @@ void app_main() {
   }
   ESP_ERROR_CHECK(ret);
 
-  ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+  ESP_LOGI(TAG, "Init LED");
+  led_init();
+  ESP_LOGI(TAG, "Init WiFi");
   wifi_init_sta();
+  ESP_LOGI(TAG, "Init Cam");
   camera_init();
+  ESP_LOGI(TAG, "Init HTTP");
   http_init();
+  ESP_LOGI(TAG, "Init done");
 }

@@ -54,7 +54,7 @@ static camera_config_t camera_config = {
     .frame_size = FRAMESIZE_UXGA,
 };
 
-static const char *TAG = "Cam";
+static const char *TAG = "CAM";
 
 void camera_init() {
   ESP_ERROR_CHECK(esp_camera_init(&camera_config));
