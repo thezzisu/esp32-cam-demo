@@ -18,45 +18,60 @@ static const char *index_html =
     "<!DOCTYPE html>"
     "<html>"
     "<head>"
-    "<title>ESP32-CAM</title>"
+    "  <title>ESP32-CAM</title>"
     "</head>"
     "<body>"
-    "<center><h1>ESP32-CAM</h1></center>"
-    "<center><img src=\"stream.mjpg\" width=\"640\" height=\"480\"></center>"
+    "  <center>"
+    "    <a href=\"https://github.com/thezzisu/esp32-cam-demo\">"
+    "      <h1>ESP32-CAM</h1>"
+    "    </a>"
+    "  </center>"
+    "  <center><img src=\"/capture\"></center>"
     "</body>"
     "</html>";
 
 static esp_err_t index_get_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "text/html");
-  httpd_resp_send(req, R"", HTTPD_RESP_USE_STRLEN);
+  httpd_resp_send(req, index_html, HTTPD_RESP_USE_STRLEN);
   return ESP_OK;
 }
 
-static const httpd_uri_t index = {
+static const httpd_uri_t index_uri = {
     .uri = "/",
     .method = HTTP_GET,
     .handler = index_get_handler,
 };
 
+void vTaskRestart(void *pvParameters) {
+  ESP_LOGI(TAG, "Restarting in 1 secs");
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  ESP_LOGI(TAG, "Restarting now");
+  esp_restart();
+}
+
+void delay_restart() {
+  xTaskCreate(vTaskRestart, "restart_task", 2048, NULL, tskIDLE_PRIORITY, NULL);
+}
+
 static esp_err_t restart_post_handler(httpd_req_t *req) {
   httpd_resp_send_chunk(req, NULL, 0);
-  esp_restart();
+  delay_restart();
   return ESP_OK;
 }
 
-static const httpd_uri_t restart = {
+static const httpd_uri_t restart_uri = {
     .uri = "/restart",
     .method = HTTP_POST,
     .handler = restart_post_handler,
 };
 
-static const httpd_uri_t capture = {
+static const httpd_uri_t capture_uri = {
     .uri = "/capture",
     .method = HTTP_GET,
     .handler = jpg_httpd_handler,
 };
 
-static const httpd_uri_t stream = {
+static const httpd_uri_t stream_uri = {
     .uri = "/stream",
     .method = HTTP_GET,
     .handler = jpg_stream_httpd_handler,
@@ -72,10 +87,10 @@ static httpd_handle_t start_webserver() {
   if (httpd_start(&server, &config) == ESP_OK) {
     // Set URI handlers
     ESP_LOGI(TAG, "Registering URI handlers");
-    httpd_register_uri_handler(server, &index);
-    httpd_register_uri_handler(server, &capture);
-    httpd_register_uri_handler(server, &stream);
-    httpd_register_uri_handler(server, &restart);
+    httpd_register_uri_handler(server, &index_uri);
+    httpd_register_uri_handler(server, &capture_uri);
+    httpd_register_uri_handler(server, &stream_uri);
+    httpd_register_uri_handler(server, &restart_uri);
 #if CONFIG_EXAMPLE_BASIC_AUTH
     httpd_register_basic_auth(server);
 #endif
